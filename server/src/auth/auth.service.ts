@@ -3,12 +3,11 @@ import {
     NotFoundException,
     UnauthorizedException,
 } from "@nestjs/common";
-import { UsersService } from "../users/users.service";
-import * as bcrypt from "bcrypt";
 import { JwtService } from "@nestjs/jwt";
-import { IUser } from "../users/IUser";
-import { SignUpDto } from "./dto/SignUp.dto";
+import * as bcrypt from "bcrypt";
+import { UsersService } from "../users/users.service";
 import { SignInDto } from "./dto/SignIn.dto";
+import { SignUpDto } from "./dto/SignUp.dto";
 
 @Injectable()
 export class AuthService {
@@ -17,7 +16,7 @@ export class AuthService {
         private jwtService: JwtService,
     ) {}
 
-    async generateToken(user: IUser) {
+    async generateToken(user) {
         const payload = { sub: user.id, username: user.username };
         return {
             access_token: await this.jwtService.signAsync(payload),

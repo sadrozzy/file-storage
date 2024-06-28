@@ -4,23 +4,19 @@ import {
     Get,
     HttpCode,
     HttpStatus,
+    Logger,
     Post,
     Request,
     UseGuards,
-    Logger,
+    UsePipes,
+    ValidationPipe,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "./auth.guard";
-import { AuthService } from "./auth.service";
 import { Public } from "./auth.guard.decorator";
-import {
-    ApiBearerAuth,
-    ApiOperation,
-    ApiParam,
-    ApiResponse,
-    ApiTags,
-} from "@nestjs/swagger";
-import { SignUpDto } from "./dto/SignUp.dto";
+import { AuthService } from "./auth.service";
 import { SignInDto } from "./dto/SignIn.dto";
+import { SignUpDto } from "./dto/SignUp.dto";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -32,8 +28,7 @@ export class AuthController {
     @Public()
     @HttpCode(HttpStatus.OK)
     @Post("signin")
-    @ApiOperation({ summary: "Вход в аккаунт" })
-    @ApiResponse({ status: HttpStatus.OK, type: SignInDto })
+    @UsePipes(new ValidationPipe())
     signIn(@Body() dto: SignInDto) {
         return this.authService.signIn(dto);
     }
@@ -41,19 +36,13 @@ export class AuthController {
     @Public()
     @HttpCode(HttpStatus.OK)
     @Post("signup")
-    @ApiOperation({ summary: "Регистрация аккаунта" })
-    @ApiResponse({ status: HttpStatus.OK, type: SignInDto })
+    @UsePipes(new ValidationPipe())
     signUp(@Body() dto: SignUpDto) {
         return this.authService.signUp(dto);
     }
 
     @UseGuards(AuthGuard)
     @Get("profile")
-    @ApiBearerAuth()
-    @ApiResponse({
-        status: HttpStatus.OK,
-        type: SignUpDto,
-    })
     getProfile(@Request() req: any) {
         return req.user;
     }

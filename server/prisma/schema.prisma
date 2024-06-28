@@ -14,9 +14,28 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  username String @unique
-  email    String @unique
-  fullname String
-  password String
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  email     String    @unique
+  fullname  String?
+  password  String
+  ban       Boolean   @default(false)
+  visitedAt DateTime?
+  createdAt DateTime  @default(now())
+  files     File[]
+
+  @@map("users")
+}
+
+model File {
+  id           Int      @id @default(autoincrement())
+  filename     String
+  originalName String
+  size         Int
+  mimeType     String
+  uploadedAt   DateTime @default(now())
+  User         User?    @relation(fields: [userId], references: [id])
+  userId       Int?
+
+  @@map("files")
 }
