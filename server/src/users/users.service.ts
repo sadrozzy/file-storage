@@ -11,6 +11,16 @@ export class UsersService {
             where: {
                 id: +id,
             },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                fullname: true,
+                password: false,
+                ban: true,
+                visitedAt: true,
+                createdAt: true,
+            },
         });
     }
 
