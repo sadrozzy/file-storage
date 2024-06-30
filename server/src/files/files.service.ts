@@ -6,10 +6,10 @@ import { FileUploadDto } from "./dto/fileUpload.dto";
 export class FilesService {
     constructor(private db: DatabaseService) {}
 
-    async findAll(userId) {
+    async findAll(id: number) {
         return this.db.file.findMany({
             where: {
-                userId: userId,
+                userId: id,
             },
         });
     }
@@ -21,6 +21,23 @@ export class FilesService {
                 originalName: fileUploadDto.originalname,
                 size: fileUploadDto.size,
                 mimeType: fileUploadDto.mimetype,
+                userId: userId,
+            },
+        });
+    }
+
+    async deleteFileById(userId: number, fileId: number) {
+        return this.db.file.delete({
+            where: {
+                userId: userId,
+                id: fileId,
+            },
+        });
+    }
+
+    async deleteAllFiles(userId: number) {
+        return this.db.file.deleteMany({
+            where: {
                 userId: userId,
             },
         });

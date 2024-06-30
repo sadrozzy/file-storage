@@ -4,26 +4,32 @@ import { AuthService } from "./auth.service";
 import { UsersModule } from "../users/users.module";
 import { JwtModule } from "@nestjs/jwt";
 import * as process from "node:process";
-import { AuthGuard } from "./auth.guard";
-import { APP_GUARD } from "@nestjs/core";
+import { LocalStrategy } from "./strategies/local.strategy";
+import { PassportModule } from "@nestjs/passport";
+import { AccessStrategy } from "./strategies/access.strategy";
+import { RefreshStrategy } from "./strategies/refresh.strategy";
 
 @Module({
     imports: [
         UsersModule,
+        PassportModule,
         JwtModule.register({
             global: true,
             secret: process.env.JWT_SECRET,
-            signOptions: { expiresIn: 86400 },
+            signOptions: { expiresIn: "30d" },
         }),
     ],
     controllers: [AuthController],
     providers: [
         AuthService,
-        {
-            provide: APP_GUARD,
-            useClass: AuthGuard,
-        },
+        LocalStrategy,
+        AccessStrategy,
+        RefreshStrategy,
+        // {
+        //     provide: APP_GUARD,
+        //     useClass: LocalAuthGuard,
+        // },
     ],
-    exports: [AuthService],
+    exports: [AuthService, AccessStrategy],
 })
 export class AuthModule {}

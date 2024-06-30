@@ -14,15 +14,16 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
-  email     String    @unique
-  fullname  String?
-  password  String
-  ban       Boolean   @default(false)
-  visitedAt DateTime?
-  createdAt DateTime  @default(now())
-  files     File[]
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  fullname     String?
+  password     String
+  ban          Boolean  @default(false)
+  visitedAt    DateTime @default(now())
+  createdAt    DateTime @default(now())
+  refreshToken String?
+  files        File[]
 
   @@map("users")
 }
