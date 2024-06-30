@@ -6,11 +6,12 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     app.setGlobalPrefix("api");
-    app.enableCors({
-        credentials: true,
-        origin: process.env.CLIENT_URL,
-    });
     app.use(cookieParser());
+    app.enableCors({
+        origin: process.env.CLIENT_URL,
+        credentials: true,
+    });
+    // app.use("/api/uploads", express.static(join(__dirname, "uploads")));
 
     const config = new DocumentBuilder()
         .setTitle("File storage API")

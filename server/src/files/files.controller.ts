@@ -1,8 +1,10 @@
 import {
     Controller,
+    Delete,
     Get,
     Param,
     Post,
+    Res,
     UploadedFile,
     UseGuards,
     UseInterceptors,
@@ -14,6 +16,7 @@ import { FilesService } from "./files.service";
 import { fileStorage } from "./storage";
 import { UserId } from "../decorators/usersId.decorator";
 import { AccessAuthGuard } from "../auth/guards/access.auth.guard";
+import { Response } from "express";
 
 @ApiTags("Files")
 @Controller("files")
@@ -23,9 +26,19 @@ export class FilesController {
     @ApiBearerAuth()
     @UseGuards(AccessAuthGuard)
     @Get()
-    @UseInterceptors(FileInterceptor("file"))
     findAll(@UserId() id: number) {
         return this.filesService.findAll(id);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AccessAuthGuard)
+    @Get(":fileName")
+    getFile(
+        @UserId() id: number,
+        @Param("fileName") filename: string,
+        @Res() res: Response,
+    ) {
+        return this.filesService.getFileByFileName(id, filename, res);
     }
 
     @ApiBearerAuth()
@@ -46,17 +59,15 @@ export class FilesController {
 
     @ApiBearerAuth()
     @UseGuards(AccessAuthGuard)
-    @Post("delete/:id")
-    @UseInterceptors(FileInterceptor("file", { storage: fileStorage }))
-    deleteFileById(@Param(":id") fileId: number, @UserId() userId: number) {
-        return this.filesService.deleteFileById(userId, fileId);
+    @Delete("delete/all")
+    deleteAllFiles(@UserId() userId: number) {
+        return this.filesService.deleteAllFiles(userId);
     }
 
     @ApiBearerAuth()
     @UseGuards(AccessAuthGuard)
-    @Post("delete/all")
-    @UseInterceptors(FileInterceptor("file", { storage: fileStorage }))
-    deleteAllFiles(@UserId() userId: number) {
-        return this.filesService.deleteAllFiles(userId);
+    @Delete("delete/:fileId")
+    deleteFileById(@Param("fileId") fileId: number, @UserId() userId: number) {
+        return this.filesService.deleteFileById(userId, fileId);
     }
 }

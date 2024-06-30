@@ -5,6 +5,7 @@ export class UserDto {
     username: string;
     email: string;
     fullname?: string;
+    password?: string;
     ban?: boolean;
     visitedAt?: string | Date;
     createdAt?: string | Date;

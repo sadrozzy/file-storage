@@ -5,6 +5,8 @@ import { UsersService } from "../users/users.service";
 import { AuthUserDto } from "./dto/authUser.dto";
 import { CreateUserDto } from "./dto/createUser.dto";
 import { UserDto } from "../users/dto/user.dto";
+import * as argon2 from "argon2";
+import { Response } from "express";
 
 @Injectable()
 export class AuthService {
@@ -25,27 +27,21 @@ export class AuthService {
         return null;
     }
 
-    async login(authUserDto: AuthUserDto) {
-        const user: UserDto = await this.usersService.findUserByUsername(
+    async login(authUserDto: AuthUserDto, res: Response) {
+        const _user: UserDto = await this.usersService.findUserByUsername(
             authUserDto.username,
         );
 
+        const { password, refreshToken, ...user } = _user;
+
         const tokens = await this.getTokens(user.id, user.username);
         await this.updateRefreshToken(user.username, tokens.refreshToken);
-        return {
-            tokens,
-        };
-        // const payload = {
-        //     username: authUserDto.username,
-        //     sub: {
-        //         id: user.id,
-        //     },
-        // };
-        //
-        // return {
-        //     accessToken: this.jwtService.sign(payload),
-        //     refreshToken: this.jwtService.sign(payload, { expiresIn: "7" }),
-        // };
+        res.cookie("refreshToken", tokens.refreshToken, {
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+        });
+
+        return res.json({ ...user, tokens });
     }
 
     async signup(createUserDto: CreateUserDto) {
@@ -64,38 +60,40 @@ export class AuthService {
         return this.usersService.updateUser(username, { refreshToken: null });
     }
 
-    // async refreshToken(user: UserDto) {
-    //     const payload = {
-    //         username: user.username,
-    //         sub: {
-    //             id: user.id,
-    //         },
-    //     };
-    //
-    //     return {
-    //         accessToken: this.jwtService.sign(payload),
-    //     };
-    // }
-
-    async refreshTokens(id: number, refreshToken: string) {
+    async refreshTokens(id: number, refreshToken: string, res: Response) {
         const user: UserDto = await this.usersService.findUserById(id);
-
         if (!user || !user.refreshToken)
             throw new ForbiddenException("Access Denied");
 
-        const tk1 = await this.jwtService.verifyAsync(user.refreshToken);
-        const tk2 = await this.jwtService.verifyAsync(refreshToken);
+        const payload = this.jwtService.verify(refreshToken, {
+            secret: process.env.JWT_SECRET_REFRESH,
+        });
 
-        if (tk1.sub != tk2.sub) throw new ForbiddenException("Access Denied");
+        const tokenMatches = await argon2.verify(
+            user.refreshToken,
+            refreshToken,
+        );
+
+        if (!tokenMatches) throw new ForbiddenException("Access Denied");
+
+        if (payload.sub !== id) {
+            throw new ForbiddenException("Access Denied");
+        }
 
         const tokens = await this.getTokens(user.id, user.username);
         await this.updateRefreshToken(user.username, tokens.refreshToken);
-        return tokens;
+        res.cookie("refreshToken", tokens.refreshToken, {
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+        });
+        return res.json({ ...user, tokens });
     }
 
     async updateRefreshToken(username: string, refreshToken: string) {
+        const hashedRefreshToken = await argon2.hash(refreshToken);
+
         return this.usersService.updateUser(username, {
-            refreshToken: refreshToken,
+            refreshToken: hashedRefreshToken,
         });
     }
 

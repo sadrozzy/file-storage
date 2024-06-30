@@ -7,11 +7,9 @@ import {
     Param,
     Patch,
     Post,
-    Req,
-    UnauthorizedException,
     UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiParam, ApiTags } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
 import { UserId } from "../decorators/usersId.decorator";
 import { AccessAuthGuard } from "../auth/guards/access.auth.guard";
@@ -21,8 +19,6 @@ import { UpdateUserDto } from "./dto/updateUser.dto";
 @Controller("users")
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
-
-    private readonly logger = new Logger(UsersService.name);
 
     @Get()
     findAll() {
@@ -34,15 +30,14 @@ export class UsersController {
         return this.usersService.findUserById(id);
     }
 
-    @ApiBearerAuth()
-    @UseGuards(AccessAuthGuard)
-    @Patch(":id")
-    update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
-        return this.usersService.updateUser(id, updateUserDto);
+    @Patch(":username")
+    update(
+        @Param("username") username: string,
+        @Body() updateUserDto: UpdateUserDto,
+    ) {
+        return this.usersService.updateUser(username, updateUserDto);
     }
 
-    @ApiBearerAuth()
-    @UseGuards(AccessAuthGuard)
     @Delete(":id")
     deleteById(@Param("id") id: number) {
         return this.usersService.deleteUser(id);
