@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { UsersService } from "../users/users.service";
@@ -14,6 +14,8 @@ export class AuthService {
         private usersService: UsersService,
         private jwtService: JwtService,
     ) {}
+
+    private readonly logger = new Logger("FilesService");
 
     async validateUser(username: string, password: string) {
         const user = await this.usersService.findUserByUsername(username);

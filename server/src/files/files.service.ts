@@ -5,7 +5,6 @@ import {
     UnauthorizedException,
 } from "@nestjs/common";
 import { DatabaseService } from "src/database/database.service";
-import { FileUploadDto } from "./dto/fileUpload.dto";
 import { join } from "path";
 import { promisify } from "util";
 import { unlink } from "fs";
@@ -19,38 +18,48 @@ export class FilesService {
     private readonly unlinkAsync = promisify(unlink);
 
     async findAll(id: number) {
-        return this.db.file.findMany({
+        const result = await this.db.file.findMany({
             where: {
                 userId: +id,
             },
         });
+
+        return result.map((file) => ({
+            ...file,
+            size: file.size.toString(),
+        }));
     }
 
-    async getFileByFileName(userId: number, filename: string, res: Response) {
+    async getFileById(userId: number, fileId: number, res: Response) {
         const file = await this.db.file.findUnique({
             where: {
                 userId: +userId,
-                filename: filename,
+                id: +fileId,
             },
         });
 
         if (!file) throw new UnauthorizedException();
 
-        const filePath = join(__dirname, "..", "..", "uploads", filename);
+        const filePath = join(__dirname, "..", "..", "uploads", file.filename);
 
         return res.sendFile(filePath);
     }
 
-    async uploadFile(fileUploadDto: FileUploadDto, userId) {
-        return this.db.file.create({
+    async uploadFile(file, userId) {
+        const result = await this.db.file.create({
             data: {
-                filename: fileUploadDto.filename,
-                originalName: fileUploadDto.originalname,
-                size: fileUploadDto.size,
-                mimeType: fileUploadDto.mimetype,
+                filename: file.filename,
+                originalName: file.originalname,
+                size: file.size,
+                mimeType: file.mimetype,
                 userId: userId,
             },
         });
+
+        return {
+            ...result,
+            size: result.size.toString(),
+        };
     }
 
     async deleteFileById(userId: number, fileId: number) {
@@ -60,26 +69,25 @@ export class FilesService {
                 userId: +userId,
             },
         });
+        this.logger.error(file);
         if (!file) throw new NotFoundException("File not found");
 
         await this.deleteFileInStorage(file);
 
-        return this.db.file.delete({
+        const result = await this.db.file.delete({
             where: {
                 id: +fileId,
                 userId: +userId,
             },
         });
+
+        return {
+            ...result,
+            size: result.size.toString(),
+        };
     }
 
     async deleteAllFiles(userId: number) {
-        // const filesCount = await this.db.file.count({
-        //     where: {
-        //         userId: +userId,
-        //     },
-        // });
-        // if (filesCount === 0) throw new NotFoundException("Files not found");
-
         const files: any = await this.db.file.findMany({
             where: {
                 userId: +userId,
@@ -87,7 +95,6 @@ export class FilesService {
         });
 
         for (const file of files) {
-            this.logger.error(file);
             await this.deleteFileInStorage(file);
         }
 

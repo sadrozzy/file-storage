@@ -42,7 +42,6 @@ export class AuthController {
     @UseGuards(AccessAuthGuard)
     @Post("logout")
     logout(@Req() req: any) {
-        this.logger.error(req);
         return this.authService.logout(req.user["username"]);
     }
 

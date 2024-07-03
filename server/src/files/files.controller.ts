@@ -1,27 +1,29 @@
 import {
+    Body,
     Controller,
     Delete,
     Get,
+    Logger,
     Param,
     Post,
     Res,
-    UploadedFile,
+    UploadedFiles,
     UseGuards,
     UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { AnyFilesInterceptor } from "@nestjs/platform-express";
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
-import { FileUploadDto } from "./dto/fileUpload.dto";
 import { FilesService } from "./files.service";
 import { fileStorage } from "./storage";
 import { UserId } from "../decorators/usersId.decorator";
 import { AccessAuthGuard } from "../auth/guards/access.auth.guard";
-import { Response } from "express";
 
 @ApiTags("Files")
 @Controller("files")
 export class FilesController {
     constructor(private readonly filesService: FilesService) {}
+
+    private readonly logger = new Logger(FilesService.name);
 
     @ApiBearerAuth()
     @UseGuards(AccessAuthGuard)
@@ -31,43 +33,72 @@ export class FilesController {
     }
 
     @ApiBearerAuth()
-    @UseGuards(AccessAuthGuard)
-    @Get(":fileName")
-    getFile(
-        @UserId() id: number,
-        @Param("fileName") filename: string,
-        @Res() res: Response,
-    ) {
-        return this.filesService.getFileByFileName(id, filename, res);
-    }
-
-    @ApiBearerAuth()
     @ApiConsumes("multipart/form-data")
     @ApiBody({
         schema: {
             type: "object",
-            properties: { file: { type: "string", format: "binary" } },
+            properties: {
+                file: {
+                    type: "array",
+                    items: { type: "string", format: "binary" },
+                },
+            },
         },
     })
     @ApiBearerAuth()
     @UseGuards(AccessAuthGuard)
     @Post("upload")
-    @UseInterceptors(FileInterceptor("file", { storage: fileStorage }))
-    uploadFile(@UploadedFile() file: FileUploadDto, @UserId() id: number) {
-        return this.filesService.uploadFile(file, id);
+    @UseInterceptors(AnyFilesInterceptor({ storage: fileStorage }))
+    async uploadFile(
+        @UploadedFiles() files: Array<Express.Multer.File>,
+        @UserId() id: number,
+    ) {
+        return await Promise.all(
+            files.map((file) => this.filesService.uploadFile(file, id)),
+        );
     }
 
     @ApiBearerAuth()
     @UseGuards(AccessAuthGuard)
-    @Delete("delete/all")
+    @Get(":fileId")
+    getFile(
+        @UserId() id: number,
+        @Param("fileId") fileId: number,
+        @Res() res: Response,
+    ) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        return this.filesService.getFileById(id, fileId, res);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AccessAuthGuard)
+    @Delete("all")
     deleteAllFiles(@UserId() userId: number) {
-        return this.filesService.deleteAllFiles(userId);
+        this.filesService.deleteAllFiles(userId);
     }
 
     @ApiBearerAuth()
+    @ApiBody({
+        schema: {
+            type: "array",
+            items: { type: "number" },
+            example: [],
+        },
+    })
     @UseGuards(AccessAuthGuard)
-    @Delete("delete/:fileId")
-    deleteFileById(@Param("fileId") fileId: number, @UserId() userId: number) {
-        return this.filesService.deleteFileById(userId, fileId);
+    @Delete()
+    async deleteFileByIds(@Body() fileIds: number[], @UserId() userId: number) {
+        try {
+            this.logger.error(fileIds);
+
+            return await Promise.all(
+                fileIds.map((fileId) => {
+                    return this.filesService.deleteFileById(userId, fileId);
+                }),
+            );
+        } catch (e) {
+            throw e;
+        }
     }
 }

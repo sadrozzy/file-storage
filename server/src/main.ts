@@ -11,6 +11,7 @@ async function bootstrap() {
         origin: process.env.CLIENT_URL,
         credentials: true,
     });
+
     // app.use("/api/uploads", express.static(join(__dirname, "uploads")));
 
     const config = new DocumentBuilder()
