@@ -1,34 +1,34 @@
 import {create} from "zustand"
 import AuthService from "@/app/api/services/AuthService";
+import {AxiosResponse} from "axios";
+import {IAuthResponse} from "@/app/api/models/response/IAuthResponse";
+import IUserSignUp from "@/app/api/models/user/IUserSignUp";
+import IUserLogIn from "@/app/api/models/user/IUserLogIn";
+import IUser from "@/app/api/models/user/IUser";
 
-interface AuthState {
-    user: User | null;
+
+interface IStore {
+    user: IUser | null;
+    setUser: (user: IUser) => void;
     isAuthenticated: boolean;
-    login: (user: User) => void;
-    logout: () => void;
-    setUser: (user: User) => void;
+    isLoading: boolean;
+    login: (user: IUserLogIn) => Promise<void>;
+    signup: (user: IUserSignUp) => Promise<void>;
+    logout: () => Promise<void>;
+    checkAuth: () => Promise<void>;
 }
 
-interface User {
-    id: string;
-    firstName: string;
-    lastName: string;
-    username: string;
-    email: string;
-    password: string;
-}
-
-const useStore = create((set) => ({
+const useStore = create<IStore>((set) => ({
     user: null,
-    setUser: (user: User) => set({user}),
+    setUser: (user: IUser) => set({user}),
     isAuthenticated: false,
-    // checkAuthentication: async () => {
-    //     const response =
-    // },
-    signin: async (user: User) => {
+    isLoading: false,
+
+    login: async (user: IUserLogIn) => {
         try {
-            const response = await AuthService.signin(user);
-            localStorage.setItem('token', response.data.access_token);
+            const response: AxiosResponse<IAuthResponse> = await AuthService.login(user)
+
+            localStorage.setItem('token', response.data.tokens.accessToken);
             console.log(response.data)
             set({user: response.data.user, isAuthenticated: true})
         } catch (e) {
@@ -37,17 +37,44 @@ const useStore = create((set) => ({
         }
 
     },
-    signup: async (user: User) => {
+    signup: async (user: IUserSignUp) => {
         try {
             const response = await AuthService.signup(user);
-            localStorage.setItem('token', response.data.access_token);
+            localStorage.setItem('token', response.data.tokens.accessToken);
+            console.log(response.data)
             set({user: response.data.user, isAuthenticated: true})
         } catch (e) {
             // @ts-ignore
             console.log(e.response?.data);
         }
     },
-    logout: async () => set({user: null, isAuthenticated: false}),
+    logout: async () => {
+        console.log("sadasdsa")
+        localStorage.removeItem('token');
+        set({user: null, isAuthenticated: false})
+
+        try {
+            const response = await AuthService.logout();
+            console.log(response)
+        } catch (e) {
+            // @ts-ignore
+            console.log(e.response?.data);
+        }
+    },
+    checkAuth: async () => {
+        set({isLoading: true})
+        try {
+            const response = await AuthService.refresh();
+            set({isAuthenticated: true})
+            localStorage.setItem("token", response.data.tokens.accessToken);
+            console.log(response)
+        } catch (e) {
+            // @ts-ignore
+            console.log(e.response?.data);
+        } finally {
+            set({isLoading: false})
+        }
+    },
 }))
 
 export default useStore

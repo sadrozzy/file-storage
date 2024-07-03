@@ -1,21 +1,29 @@
 "use client"
-import React, {useEffect} from "react";
-import {ModeToggle} from "@/components/ui/theme-toggle";
-import useStore from "@/app/store/store";
+import useStore from "@/app/store/store"
+import {ModeToggle} from "@/components/ui/theme-toggle"
+import {useRouter} from 'next/navigation'
+import React, {useEffect} from "react"
+import Loader from "@/app/loader/loader";
 
 export default function DashboardLayout({children}: {
     children: React.ReactNode
 }) {
-
     const store = useStore()
+    const router = useRouter()
 
     useEffect(() => {
-        if (localStorage.getItem("token")){
-            // @ts-ignore
-            console.log(store.isAuthenticated)
-            console.log(store.user)
+        if (localStorage.getItem("token")) {
+            store.checkAuth();
         }
-    })
+    }, [])
+
+    if (store.isLoading) {
+        return <Loader/>
+    }
+
+    if (store.isAuthenticated){
+        return router.push("/dashboard")
+    }
 
     return (
         <section className="relative">

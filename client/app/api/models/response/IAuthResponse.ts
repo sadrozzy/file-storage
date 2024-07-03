@@ -1,7 +1,11 @@
-import IUser from "@/app/api/models/IUser";
+import IUser from "@/app/api/models/user/IUser";
+
+interface ITokens {
+    accessToken: string;
+    refreshToken: string;
+}
 
 export interface IAuthResponse {
-    access_token: string;
-    refresh_token: string;
-    user: IUser
+    user: IUser;
+    tokens: ITokens;
 }

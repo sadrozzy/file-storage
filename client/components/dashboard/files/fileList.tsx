@@ -1,46 +1,23 @@
-import {getFileExtension} from "@/lib/getFileExtension";
-import {getColorByExtension} from "@/lib/getColorByExtension";
-import {isImage} from "@/lib/isImage";
-import Image from "next/image";
-import {useEffect, useState} from "react";
-import {GetAllFiles} from "@/app/api/services/Files";
+import FileCard from "@/components/dashboard/files/fileCard";
+import IFile from "@/app/api/models/file/file.dto";
+import {FileSelectType} from "@/components/dashboard/files/fileModule";
 
-interface IFileCardProps {
-    filename: string,
-    originalName: string,
+interface IFileListProps {
+    files: IFile[] | null;
 }
 
-export default function FileCard({originalName, filename}: IFileCardProps) {
-    const [files, setFiles] = useState<any[]>([]);
-    const ext = getFileExtension(filename)
-    const color = getColorByExtension(ext)
-
-    // @ts-ignore
-    useEffect(() => {
-        (async () => {
-            try {
-                const response = await GetAllFiles();
-                // @ts-ignore
-                const fileArray = Array.from(response.data);
-                setFiles(fileArray);
-            } catch (error) {
-                console.error('Ошибка при загрузке файлов:', error);
-            }
-        })()
-
-    }, [])
-
-    useEffect(() => {
-        console.log(files);
-    }, [files]);
-
+const FileList = ({files}: IFileListProps) => {
     return (
-        <div>
-            {/*<Image src={response.data[0]}>*/}
-            {
-                isImage(ext) ? <Image alt="image"/> : <h1>Типо картинка файла</h1>
-            }
+        <div
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-9 gap-4">
+            {files?.map((file: IFile, index: number) => (
+                <div id={file.id} key={index} className="file rounded-lg flex justify-center items-center py-6">
+                    <FileCard filename={file.filename} originalName={file.originalName}/>
+                </div>
+            ))}
         </div>
     )
 
 }
+
+export default FileList

@@ -8,6 +8,7 @@ import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@
 import {Input} from "@/components/ui/input"
 import Link from "next/link";
 import useStore from "@/app/store/store";
+import {useRouter} from "next/navigation";
 
 const formSchema = z.object({
     firstName: z.string().min(2, {message: "Слишком короткое имя"}),
@@ -22,17 +23,17 @@ const formSchema = z.object({
 
 export default function Page() {
     const store = useStore()
+    const router = useRouter()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
     })
 
     function onSubmit(values: z.infer<typeof formSchema>) {
-        // Do something with the form values.
-        // ✅ This will be type-safe and validated.
         console.log(values)
-        // @ts-ignore
-        store.signup(values)
+        store.signup(values).then(() => {
+            router.push("/dashboard")
+        })
     }
 
     return (
@@ -130,7 +131,7 @@ export default function Page() {
             </CardContent>
             <CardFooter className="w-full flex justify-center">
                 <Link className="text-xs text-muted-foreground border-b border-muted-foreground"
-                      href="/auth/signin">Уже зарегистрированы? Войти</Link>
+                      href="/auth/login">Уже зарегистрированы? Войти</Link>
             </CardFooter>
         </Card>
     )

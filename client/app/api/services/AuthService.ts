@@ -1,23 +1,14 @@
 import $api from "@/app/api/http";
 import {AxiosResponse} from "axios";
 import {IAuthResponse} from "@/app/api/models/response/IAuthResponse";
+import IUserLogIn from "@/app/api/models/user/IUserLogIn";
+import IUserSignUp from "@/app/api/models/user/IUserSignUp";
 
-interface IUserSignIn {
-    username: string;
-    password: string;
-}
 
-interface IUserSignUp {
-    username: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    password: string;
-}
 
 export default class AuthService {
-    static async signin(user: IUserSignIn): Promise<AxiosResponse<IAuthResponse>> {
-        return $api.post<IAuthResponse>('/auth/signin', {
+    static async login(user: IUserLogIn): Promise<AxiosResponse<IAuthResponse>> {
+        return $api.post<IAuthResponse>('/auth/login', {
             username: user.username,
             password: user.password
         })
@@ -33,6 +24,10 @@ export default class AuthService {
     }
 
     static async logout(): Promise<void> {
-        return $api.post('/api/auth/logout')
+        return $api.post('/auth/logout')
+    }
+
+    static async refresh() {
+        return $api.get('/auth/refresh')
     }
 }

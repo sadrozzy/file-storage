@@ -9,6 +9,8 @@ import {Input} from "@/components/ui/input"
 import Link from "next/link";
 import useStore from "@/app/store/store";
 import {useRouter} from "next/navigation";
+import Loader from "@/app/loader/loader";
+import React from "react";
 
 const formSchema = z.object({
     username: z.string().min(2, {
@@ -26,13 +28,14 @@ export default function Page() {
         resolver: zodResolver(formSchema),
     })
 
+
     function onSubmit(values: z.infer<typeof formSchema>) {
         console.log(values)
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
         // @ts-ignore
-        if (store.signin(values)) {
-            // router.push("/")
+        if (store.login(values).then()) {
+            router.push("/dashboard")
         }
     }
 
