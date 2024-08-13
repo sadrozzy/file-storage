@@ -1,5 +1,6 @@
 networks:
   file-storage-net:
+    driver: bridge
 
 services:
   nginx:
@@ -14,7 +15,7 @@ services:
       - server
       - client
     networks:
-      - file-storage-net
+      - file_storage_net
 
   server:
     container_name: file-storage-server
@@ -24,14 +25,14 @@ services:
     ports:
       - "4000:4000"
     environment:
-      DATABASE_URL: postgresql://username:password@db:5432/file_storage_db?schema=public
+      DATABASE_URL: postgresql://root:admin@db:5432/file_storage_db?schema=public
       JWT_SECRET: YourString
       JWT_SECRET_REFRESH: YourAnotherString
       CLIENT_URL: http://disk.sadrozzy.me:3000
     depends_on:
       - db
     networks:
-      - file-storage-net
+      - file_storage_net
 
   client:
     container_name: file-storage-client
@@ -42,7 +43,7 @@ services:
       NEXT_PUBLIC_API_URL: http://disk.sadrozzy.me:4000
       NEXT_PUBLIC_STATIC_URL: http://disk.sadrozzy.me:4000/uploads
     networks:
-      - file-storage-net
+      - file_storage_net
 
   db:
     container_name: postgres
@@ -50,11 +51,11 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: username
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: admin
       POSTGRES_DB: file_storage_db
     networks:
-      - file-storage-net
+      - file_storage_net
 
 volumes:
   db-data:
