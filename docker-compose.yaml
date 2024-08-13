@@ -1,10 +1,9 @@
-version: '3'
-
 networks:
   file-storage-net:
 
 services:
   nginx:
+    container_name: nginx
     image: nginx:stable-alpine
     ports:
       - "80:80"
@@ -18,13 +17,14 @@ services:
       - file-storage-net
 
   server:
+    container_name: file-storage-server
     build: ./server
     volumes:
       - uploads:/app/uploads
     ports:
       - "4000:4000"
     environment:
-      DATABASE_URL: postgresql://username:password@localhost:5432/file_storage_db?schema=public
+      DATABASE_URL: postgresql://username:password@db:5432/file_storage_db?schema=public
       JWT_SECRET: YourString
       JWT_SECRET_REFRESH: YourAnotherString
       CLIENT_URL: http://disk.sadrozzy.me:3000
@@ -34,6 +34,7 @@ services:
       - file-storage-net
 
   client:
+    container_name: file-storage-client
     build: ./client
     ports:
       - "3000:3000"
@@ -44,6 +45,7 @@ services:
       - file-storage-net
 
   db:
+    container_name: postgres
     image: postgres:alpine
     volumes:
       - db-data:/var/lib/postgresql/data
