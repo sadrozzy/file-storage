@@ -5,6 +5,7 @@ networks:
 services:
   nginx:
     container_name: nginx
+    restart: always
     image: nginx:stable-alpine
     ports:
       - "80:80"
@@ -19,6 +20,7 @@ services:
 
   server:
     container_name: file-storage-server
+    restart: always
     build: ./server
     volumes:
       - uploads:/app/uploads
@@ -36,6 +38,7 @@ services:
 
   client:
     container_name: file-storage-client
+    restart: always
     build: ./client
     ports:
       - "3000:3000"
@@ -47,6 +50,7 @@ services:
 
   db:
     container_name: postgres
+    restart: always
     image: postgres:alpine
     volumes:
       - db-data:/var/lib/postgresql/data
@@ -54,6 +58,8 @@ services:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: file_storage_db
+    ports:
+      - "5432:5432"
     networks:
       - file_storage_net
 
