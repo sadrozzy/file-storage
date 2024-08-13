@@ -1,5 +1,5 @@
 networks:
-  file-storage-net:
+  file_storage_net:
     driver: bridge
 
 services:
