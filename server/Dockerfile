@@ -5,6 +5,6 @@ WORKDIR /client
 COPY package.json ./
 RUN npm i
 COPY . ./
-RUN npm run build \
-    npx prisma migrate dev \
+RUN npx prisma migrate dev \
     npx prisma generate \
+    npm run build
