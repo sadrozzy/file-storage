@@ -1,8 +1,8 @@
-FROM node:alpine as build
+FROM node:alpine AS build
 
 WORKDIR /client
 
 COPY package.json ./
 RUN npm i
 COPY . ./
-RUN npm build
+RUN npm run build && npx prisma generate
