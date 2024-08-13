@@ -3,18 +3,24 @@ networks:
     driver: bridge
 
 services:
-  nginx:
-    container_name: nginx
+  db:
+    container_name: postgres
     restart: always
-    image: nginx:stable-alpine
-    ports:
-      - "80:80"
-      - "443:443"
+    image: postgres:alpine
     volumes:
-      - "./nginx.conf:/etc/nginx/nginx.conf"
-    depends_on:
-      - server
-      - client
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: file_storage_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root -d file_storage_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - "5432:5432"
     networks:
       - file_storage_net
 
@@ -48,24 +54,18 @@ services:
     networks:
       - file_storage_net
 
-  db:
-    container_name: postgres
+  nginx:
+    container_name: nginx
     restart: always
-    image: postgres:alpine
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: file_storage_db
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U habrpguser -d habrdb" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+    image: nginx:stable-alpine
     ports:
-      - "5432:5432"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf"
+    depends_on:
+      - server
+      - client
     networks:
       - file_storage_net
 
