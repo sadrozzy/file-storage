@@ -1,0 +1,58 @@
+version: '1.0'
+
+networks:
+  file-storage-net
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf"
+    depends_on:
+      - db
+      - server
+      - client
+    networks:
+      - file-storage-net
+
+  server:
+    build: ./server
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgresql://username:password@localhost:5432/file_storage_db?schema=public
+      JWT_SECRET: YourString
+      JWT_SECRET_REFRESH: YourAnotherString
+      CLIENT_URL: http://disk.sadrozzy.me:3000
+    networks:
+      - file-storage-net
+
+  client:
+    build: ./client
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://disk.sadrozzy.me:4000
+      NEXT_PUBLIC_STATIC_URL: http://disk.sadrozzy.me:4000/uploads
+    networks:
+      - file-storage-net
+
+  db:
+    image: postgres:alpine
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: file_storage_db
+    networks:
+      - file-storage-net
+
+  volumes:
+    db-data:
+    uploads:
